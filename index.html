@@ -73,6 +73,7 @@ function itemSprite(kind,x,y,s=1){
  c.restore()
 }
 function draw(){
+ if(!map.length)return;
  const cp=iso(p.x,p.y);cam.x=cp.x;cam.y=cp.y;
  const sx=(wx,wy)=>{const q=iso(wx,wy);return [q.x-cam.x+W/2,q.y-cam.y+H/2]};
  c.setTransform(D,0,0,D,0,0);c.fillStyle='#263a2d';c.fillRect(0,0,W,H);
@@ -118,7 +119,7 @@ function draw(){
  if(nearby()>=0){c.fillStyle='#fff';c.font='bold 13px monospace';c.textAlign='center';c.fillText('E  PICK UP',px,py-38)}
  if(buildMode){c.fillStyle='#ffe08a';c.font='13px monospace';c.textAlign='left';c.fillText('BUILD: '+buildMode.toUpperCase()+' · ESC CANCEL',12,H-18)}
 }
-let last=0;function loop(ts){let dt=Math.min((ts-last)/1000||0,.05);last=ts;update(dt);draw();requestAnimationFrame(loop)}
+let last=0;function loop(ts){let dt=Math.min((ts-last)/1000||0,.05);last=ts;try{update(dt);draw()}catch(err){console.error('LAST 30 DAYS render error:',err)}requestAnimationFrame(loop)}
 addEventListener('keydown',e=>{let k=e.key.toLowerCase();keys[k]=true;if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k))e.preventDefault();if(k==='e')interact();if(k==='q')use('food');if(k==='r')use('water');if(k==='c'&&mode==='play')craft();if(k==='b'&&mode==='play')build();if(k==='i'&&mode==='play')inventory();if(k==='escape'){if(buildMode){buildMode=null;say('Build cancelled.')}else if(mode!=='play')resume()}if('12345'.includes(k)){selected=+k-1;if(selected===0)p.weapon='knife';if(selected===1&&inv.pistol)p.weapon='pistol';if(selected===2&&inv.shotgun)p.weapon='shotgun';if(selected===3)use('food');if(selected===4)use('water');hud()}});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 cv.addEventListener('pointermove',e=>mouse={x:e.clientX,y:e.clientY});cv.addEventListener('pointerdown',e=>{mouse={x:e.clientX,y:e.clientY};if(mode!=='play')return;if(buildMode){const q=worldAt(mouse.x,mouse.y);place(q.x,q.y)}else attack()});
 document.querySelectorAll('[data-key]').forEach(b=>{let k=b.dataset.key;b.onpointerdown=e=>{e.preventDefault();keys[k]=true};['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>keys[k]=false))});$('hit').onpointerdown=e=>{e.preventDefault();attack()};$('use').onpointerdown=e=>{e.preventDefault();interact()};
