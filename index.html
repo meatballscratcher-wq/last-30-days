@@ -54,16 +54,60 @@ for(let z of [...zombies]){let d=dist(p,z);if(d<520){if(d>22)move(z,(p.x-z.x)/(d
 for(let b of bullets){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;let z=zombies.find(z=>dist(z,b)<15);if(z){z.hp-=b.damage;b.life=0;if(z.hp<=0)kill(z)}}bullets=bullets.filter(b=>b.life>0);
 for(let s of props.filter(s=>s.type==='barricade'))for(let z of zombies)if(dist(s,z)<30&&z.cd<=0){s.hp-=8;z.cd=.8}props=props.filter(s=>s.hp>0);
 if(p.hp<=0){finish(false);return}if(extract&&p.x>N*T-235&&p.y<235&&keys.e){finish(true);return}cam.x=C(p.x-W/2,0,N*T-W);cam.y=C(p.y-H/2,0,N*T-H);if(toastT>0&&((toastT-=dt)<=0))$('toast').style.opacity=0;hud()}
-function draw(){c.fillStyle='#253a2b';c.fillRect(0,0,W,H);let sx=Math.floor(cam.x/T),sy=Math.floor(cam.y/T),ex=Math.ceil((cam.x+W)/T)+1,ey=Math.ceil((cam.y+H)/T)+1;
-for(let y=sy;y<ey;y++)for(let x=sx;x<ex;x++){if(x<0||y<0||x>=N||y>=N)continue;let t=map[y][x],a=x*T-cam.x,b=y*T-cam.y;c.fillStyle=t.type==='water'?'#254b58':t.type==='dirt'?'#66563c':'#344b36';c.fillRect(a,b,T,T);if(t.type==='grass'&&Math.random()<.003){c.fillStyle='#466443';c.fillRect(a+8,b+8,2,2)}if(t.type==='tree'){c.fillStyle='#60432d';c.fillRect(a+13,b+17,7,14);c.fillStyle='#24442e';c.fillRect(a+4,b+3,24,22);c.fillStyle='#365a3c';c.fillRect(a+9,b+1,13,14)}if(t.type==='rock'){c.fillStyle='#858477';c.fillRect(a+5,b+9,22,17)}if(t.type==='bush'){c.fillStyle='#587442';c.fillRect(a+4,b+10,24,16)}if(t.type==='wreck'){c.fillStyle='#876348';c.fillRect(a+3,b+10,26,14)}if(t.type==='building'){c.fillStyle='#6c5845';c.fillRect(a+1,b+1,30,30);c.fillStyle='#9b8163';c.fillRect(a+4,b+4,24,24);c.fillStyle='#51483c';c.fillRect(a+8,b+8,16,16)}if(t.type==='door'){c.fillStyle='#a77b49';c.fillRect(a+5,b+3,22,28)}}
-for(let l of loot){let x=l.x-cam.x,y=l.y-cam.y;c.fillStyle='#e4c36c';c.fillRect(x-5,y-5,10,10);c.fillStyle='#fff2bd';c.fillRect(x-2,y-2,4,4)}
-for(let s of props){let x=s.x-cam.x,y=s.y-cam.y;c.fillStyle=s.type==='campfire'?'#e58c36':'#8d6943';c.fillRect(x-12,y-9,24,18);if(s.type==='campfire'){c.fillStyle='#ffcf62';c.fillRect(x-3,y-15,6,14)}}
-for(let z of zombies){let x=z.x-cam.x,y=z.y-cam.y;c.fillStyle=z.hit?'#fff':z.type==='brute'?'#81483f':z.type==='runner'?'#a4a44e':'#788d63';c.fillRect(x-8,y-11,z.type==='brute'?18:15,21);c.fillStyle='#e5d8b3';c.fillRect(x-5,y-6,3,3);c.fillRect(x+2,y-6,3,3)}
-for(let b of bullets){c.fillStyle='#ffdb81';c.fillRect(b.x-cam.x-2,b.y-cam.y-2,4,4)}
-let x=p.x-cam.x,y=p.y-cam.y;c.fillStyle='#d3b78d';c.fillRect(x-7,y-11,14,17);c.fillStyle='#344b59';c.fillRect(x-8,y+5,16,9);c.fillStyle='#252a2b';c.fillRect(x-6,y-14,12,6);
-if(night){c.save();c.fillStyle='rgba(3,8,16,.72)';c.fillRect(0,0,W,H);c.globalCompositeOperation='destination-out';let g=c.createRadialGradient(x,y,25,x,y,175);g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.beginPath();c.arc(x,y,175,0,Math.PI*2);c.fill();for(let s of props.filter(s=>s.type==='campfire')){let a=s.x-cam.x,b=s.y-cam.y,f=c.createRadialGradient(a,b,5,a,b,115);f.addColorStop(0,'rgba(0,0,0,1)');f.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=f;c.beginPath();c.arc(a,b,115,0,Math.PI*2);c.fill()}c.restore()}
-if(extract){c.fillStyle='#f1d16d';c.fillRect(N*T-220-cam.x,25-cam.y,190,150);c.fillStyle='#302c21';c.fillText('EXTRACTION ZONE',N*T-215-cam.x,48-cam.y)}
-if(nearby()>=0){c.fillStyle='white';c.font='12px monospace';c.fillText('E  PICK UP',x-32,y-25)}if(buildMode){c.fillStyle='#e7bd66';c.fillText('BUILD: '+buildMode.toUpperCase()+' · ESC CANCEL',12,H-18)}}
+function draw(){
+  // Keep the camera locked to the survivor even if an update frame is skipped.
+  cam.x=C(p.x-W/2,0,Math.max(0,N*T-W));
+  cam.y=C(p.y-H/2,0,Math.max(0,N*T-H));
+  c.setTransform(D,0,0,D,0,0);
+  c.fillStyle='#263b2d';c.fillRect(0,0,W,H);
+  const sx=Math.max(0,Math.floor(cam.x/T)),sy=Math.max(0,Math.floor(cam.y/T));
+  const ex=Math.min(N,Math.ceil((cam.x+W)/T)+1),ey=Math.min(N,Math.ceil((cam.y+H)/T)+1);
+  for(let ty=sy;ty<ey;ty++)for(let tx=sx;tx<ex;tx++){
+    const row=map[ty];if(!row)continue;const tile=row[tx];if(!tile)continue;
+    const a=tx*T-cam.x,b=ty*T-cam.y;
+    c.fillStyle=tile.type==='water'?'#315d70':tile.type==='dirt'?'#806747':'#496744';
+    c.fillRect(a,b,T,T);
+    c.strokeStyle='rgba(20,35,22,.18)';c.lineWidth=1;c.strokeRect(a+.5,b+.5,T-1,T-1);
+    if(tile.type==='grass'){
+      c.fillStyle='#638052';c.fillRect(a+5,b+8,3,2);c.fillRect(a+22,b+23,2,3);
+    } else if(tile.type==='tree'){
+      c.fillStyle='#493323';c.fillRect(a+12,b+15,9,16);
+      c.fillStyle='#1f3827';c.fillRect(a+1,b+5,30,22);
+      c.fillStyle='#31583a';c.fillRect(a+5,b+1,22,19);
+      c.fillStyle='#477047';c.fillRect(a+10,b+4,11,8);
+    } else if(tile.type==='rock'){
+      c.fillStyle='#555951';c.fillRect(a+4,b+13,25,15);c.fillStyle='#9b9b8c';c.fillRect(a+8,b+9,16,13);c.fillStyle='#c0bca9';c.fillRect(a+11,b+10,7,5);
+    } else if(tile.type==='bush'){
+      c.fillStyle='#29452b';c.fillRect(a+3,b+12,27,16);c.fillStyle='#66834b';c.fillRect(a+6,b+7,20,16);c.fillStyle='#8a9b58';c.fillRect(a+10,b+8,7,5);
+    } else if(tile.type==='wreck'){
+      c.fillStyle='#343b3b';c.fillRect(a+2,b+9,28,17);c.fillStyle='#9a5140';c.fillRect(a+5,b+7,21,14);c.fillStyle='#b9c5bd';c.fillRect(a+8,b+10,7,6);c.fillRect(a+19,b+10,5,6);
+    } else if(tile.type==='building'){
+      c.fillStyle='#423d37';c.fillRect(a,b,32,32);c.fillStyle='#a28a69';c.fillRect(a+2,b+2,28,28);c.fillStyle='#78664f';c.fillRect(a+5,b+5,22,22);c.fillStyle='#39474a';c.fillRect(a+8,b+8,6,7);c.fillRect(a+19,b+8,6,7);c.fillStyle='#4b3829';c.fillRect(a+13,b+18,7,10);
+    } else if(tile.type==='door'){
+      c.fillStyle='#59402d';c.fillRect(a+3,b+2,26,30);c.fillStyle='#b88a53';c.fillRect(a+6,b+4,20,28);c.fillStyle='#e3c17c';c.fillRect(a+21,b+17,2,2);
+    }
+  }
+  // Loot and placed structures.
+  for(const l of loot){const x=l.x-cam.x,y=l.y-cam.y;c.fillStyle='#30291b';c.fillRect(x-8,y-8,16,16);c.fillStyle='#f1c85c';c.fillRect(x-6,y-6,12,12);c.fillStyle='#fff2b7';c.fillRect(x-2,y-2,4,4)}
+  for(const s of props){const x=s.x-cam.x,y=s.y-cam.y;c.fillStyle=s.type==='campfire'?'#9b5128':'#503824';c.fillRect(x-14,y-10,28,20);if(s.type==='campfire'){c.fillStyle='#ff9b32';c.fillRect(x-5,y-17,10,15);c.fillStyle='#ffe078';c.fillRect(x-2,y-12,4,9)}}
+  // Zombies are deliberately larger and have contrasting heads, torsos and limbs.
+  for(const z of zombies){const x=z.x-cam.x,y=z.y-cam.y;c.fillStyle='#18221a';c.fillRect(x-10,y-12,20,25);c.fillStyle=z.hit?'#fff':z.type==='brute'?'#9a5147':z.type==='runner'?'#b0ad57':'#91a66d';c.fillRect(x-8,y-13,z.type==='brute'?18:16,20);c.fillStyle='#c8b98c';c.fillRect(x-5,y-18,11,9);c.fillStyle='#451f1c';c.fillRect(x-3,y-15,2,2);c.fillRect(x+3,y-15,2,2);c.fillStyle='#263b2d';c.fillRect(x-12,y+3,5,9);c.fillRect(x+7,y+3,5,9)}
+  for(const b of bullets){c.fillStyle='#fff0a0';c.fillRect(b.x-cam.x-3,b.y-cam.y-3,7,7)}
+  // Survivor: shadow, legs, torso, head and bright outline make the player impossible to miss.
+  const px=p.x-cam.x,py=p.y-cam.y;
+  c.fillStyle='rgba(0,0,0,.38)';c.beginPath();c.ellipse(px,py+11,13,6,0,0,Math.PI*2);c.fill();
+  c.fillStyle='#17232a';c.fillRect(px-10,py-13,20,29);
+  c.fillStyle='#3c6272';c.fillRect(px-8,py-10,16,19);
+  c.fillStyle='#d8b58b';c.fillRect(px-7,py-20,14,12);
+  c.fillStyle='#332a24';c.fillRect(px-8,py-23,16,6);c.fillRect(px-9,py-19,3,5);
+  c.fillStyle='#f2d477';c.fillRect(px-1,py-8,3,3);
+  c.strokeStyle='#fff1b0';c.lineWidth=2;c.strokeRect(px-11,py-24,22,37);
+  // Night overlay with a visible personal light radius.
+  if(night){c.save();c.fillStyle='rgba(3,8,16,.68)';c.fillRect(0,0,W,H);c.globalCompositeOperation='destination-out';let g=c.createRadialGradient(px,py,18,px,py,190);g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.beginPath();c.arc(px,py,190,0,Math.PI*2);c.fill();for(const s of props.filter(s=>s.type==='campfire')){const ax=s.x-cam.x,ay=s.y-cam.y,f=c.createRadialGradient(ax,ay,5,ax,ay,125);f.addColorStop(0,'rgba(0,0,0,1)');f.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=f;c.beginPath();c.arc(ax,ay,125,0,Math.PI*2);c.fill()}c.restore()}
+  if(extract){c.fillStyle='#f1d16d';c.fillRect(N*T-220-cam.x,25-cam.y,190,150);c.fillStyle='#302c21';c.font='14px monospace';c.fillText('EXTRACTION ZONE',N*T-215-cam.x,48-cam.y)}
+  if(nearby()>=0){c.fillStyle='#fff';c.font='bold 13px monospace';c.fillText('E  PICK UP',px-34,py-34)}
+  if(buildMode){c.fillStyle='#ffe08a';c.font='13px monospace';c.fillText('BUILD: '+buildMode.toUpperCase()+' · ESC CANCEL',12,H-18)}
+}
 let last=0;function loop(ts){let dt=Math.min((ts-last)/1000||0,.05);last=ts;update(dt);draw();requestAnimationFrame(loop)}
 addEventListener('keydown',e=>{let k=e.key.toLowerCase();keys[k]=true;if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k))e.preventDefault();if(k==='e')interact();if(k==='q')use('food');if(k==='r')use('water');if(k==='c'&&mode==='play')craft();if(k==='b'&&mode==='play')build();if(k==='i'&&mode==='play')inventory();if(k==='escape'){if(buildMode){buildMode=null;say('Build cancelled.')}else if(mode!=='play')resume()}if('12345'.includes(k)){selected=+k-1;if(selected===0)p.weapon='knife';if(selected===1&&inv.pistol)p.weapon='pistol';if(selected===2&&inv.shotgun)p.weapon='shotgun';if(selected===3)use('food');if(selected===4)use('water');hud()}});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 cv.addEventListener('pointermove',e=>mouse={x:e.clientX,y:e.clientY});cv.addEventListener('pointerdown',e=>{mouse={x:e.clientX,y:e.clientY};if(mode!=='play')return;if(buildMode)place(mouse.x+cam.x,mouse.y+cam.y);else attack()});
