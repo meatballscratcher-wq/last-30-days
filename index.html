@@ -49,13 +49,13 @@ function save(){try{localStorage.setItem('last30-save',JSON.stringify({p,inv,day
 function load(){try{let d=JSON.parse(localStorage.getItem('last30-save'));if(!d)throw 0;start();Object.assign(p,d.p);inv=d.inv;day=d.day;time=d.time;weather=d.weather;zombies=d.zombies||[];loot=d.loot||[];props=d.props||[];houses.forEach((h,i)=>h.searched=!!d.houseSearched?.[i]);resume();say('Save loaded.');hud()}catch(e){say('No save found. Starting fresh.');start()}}
 function finish(win){mode='over';save();screen(win?'YOU MADE IT':'YOU DID NOT SURVIVE',win?'<p>The helicopter spotted your signal. Thirty days in hell, and you made it out.</p><h2>FINAL SCORE: '+p.kills+' KILLS</h2>':'<p>The town claimed another survivor on Day '+day+'. You eliminated '+p.kills+' infected.</p>',[['PLAY AGAIN',start],['MAIN MENU',title]])}
 function update(dt){if(mode!=='play')return;time+=dt*7.5;if(time>=1440){time-=1440;day++;weather=pick(['CLEAR','CLOUDY','RAIN']);say('DAY '+day+' · '+weather);for(let i=0;i<6+day;i++)zspawn(R(70,N*T-70),R(70,N*T-70));if(day>=30){day=30;extract=true}save()}night=time<360||time>1140;p.hunger=C(p.hunger-dt*.22,0,100);p.thirst=C(p.thirst-dt*.34,0,100);if(!p.hunger||!p.thirst)p.hp-=dt*(!p.thirst?2:1);if(night){spawnT+=dt;if(spawnT>Math.max(4,16-day*.3)){spawnT=0;zspawn(R(60,N*T-60),R(60,N*T-60))}}p.attack=Math.max(0,p.attack-dt);p.invuln=Math.max(0,p.invuln-dt);
-let dx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),dy=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);if(dx||dy){let l=Math.hypot(dx,dy);move(p,dx/l*p.speed*dt,dy/l*p.speed*dt)}
+let sx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),sy=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);if(sx||sy){let sl=Math.hypot(sx,sy);sx/=sl;sy/=sl;let dx=(sx/.75+sy/.38)/2,dy=(sy/.38-sx/.75)/2;let scale=Math.hypot(dx,dy);dx=dx/scale*p.speed*dt;dy=dy/scale*p.speed*dt;move(p,dx,dy)}
 for(let z of [...zombies]){let d=dist(p,z);if(d<520){if(d>22)move(z,(p.x-z.x)/(d||1)*z.speed*dt,(p.y-z.y)/(d||1)*z.speed*dt);else if(z.cd<=0&&p.invuln<=0){p.hp-=z.type==='brute'?17:8;p.invuln=.7;z.cd=1;say('You are being attacked!')}}z.cd=Math.max(0,z.cd-dt);z.hit=Math.max(0,z.hit-dt)}
 for(let b of bullets){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;let z=zombies.find(z=>dist(z,b)<15);if(z){z.hp-=b.damage;b.life=0;if(z.hp<=0)kill(z)}}bullets=bullets.filter(b=>b.life>0);
 for(let s of props.filter(s=>s.type==='barricade'))for(let z of zombies)if(dist(s,z)<30&&z.cd<=0){s.hp-=8;z.cd=.8}props=props.filter(s=>s.hp>0);
 if(p.hp<=0){finish(false);return}if(extract&&p.x>N*T-235&&p.y<235&&keys.e){finish(true);return}cam.x=iso(p.x,p.y).x;cam.y=iso(p.x,p.y).y;if(toastT>0&&((toastT-=dt)<=0))$('toast').style.opacity=0;hud()}
-function iso(x,y){return {x:(x-y)*.75,y:(x+y)*.38}}
-function worldAt(sx,sy){const ix=sx+cam.x-W/2,iy=sy+cam.y-H/2;return {x:ix/.75+iy/.38>>1,y:iy/.38-ix/.75>>1}}
+function iso(x,y){return {x:(x-y)*.72,y:(x+y)*.36}}
+function worldAt(sx,sy){const ix=sx+cam.x-W/2,iy=sy+cam.y-H/2;return {x:(ix/.72+iy/.36)/2,y:(iy/.36-ix/.72)/2}}
 function poly(points,fill,stroke){c.beginPath();points.forEach((v,i)=>i?c.lineTo(v[0],v[1]):c.moveTo(v[0],v[1]));c.closePath();c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=1.2;c.stroke()}}
 function itemSprite(kind,x,y,s=1){
  c.save();c.translate(x,y);c.scale(s,s);
